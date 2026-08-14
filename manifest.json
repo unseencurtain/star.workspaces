@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "star.workspaces",
+  "name": "Monitor Workspaces",
+  "version": "2.1.0",
+  "author": "Star",
+  "description": "Shows only the Hyprland workspaces belonging to each monitor",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Workspaces.qml"
+  },
+  "barWidget": {
+    "displayName": "Monitor Workspaces",
+    "description": "Shows workspaces assigned to the current monitor",
+    "category": "Compositor",
+    "defaultSection": "left",
+    "allowMultiple": false
+  }
+}
