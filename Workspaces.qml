@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
@@ -8,6 +10,29 @@ BarWidget {
     id: root
 
     property string monitorName: Screen.name || ""
+
+    // Sizes live in ~/.config/omarchy/bar-sizes.json (section "workspaces"),
+    // with the shell.json widget setting and then the theme as fallbacks.
+    property var sizeConfig: ({})
+    readonly property var wsSizes: root.sizeConfig.workspaces || ({})
+
+    readonly property int numberSize: {
+        var v = Number(wsSizes.numberSize)
+        if (isFinite(v) && v > 0) return Math.round(v)
+        var s = Number(setting("fontSize", 0))
+        return (isFinite(s) && s > 0) ? s : Style.font.body
+    }
+
+    readonly property int glyphSize: {
+        var v = Number(wsSizes.glyphSize)
+        if (isFinite(v) && v > 0) return Math.round(v)
+        return root.numberSize
+    }
+
+    readonly property string glyph:
+        (wsSizes.glyph !== undefined && wsSizes.glyph !== null)
+            ? String(wsSizes.glyph)
+            : "\uDB85\uDCFB"
 
     function workspaceById(id) {
         var values = Hyprland.workspaces.values
@@ -87,14 +112,15 @@ BarWidget {
 
                 bar: root.bar
 
-                text: focused
-                    ? "\uDB85\uDCFB"
+                text: focused && root.glyph !== ""
+                    ? root.glyph
                     : String(modelData)
 
                 opacity: occupied || focused ? 1 : 0.5
 
                 horizontalMargin: 6
                 verticalPadding: 6
+                fontSize: focused ? root.glyphSize : root.numberSize
 
                 fixedWidth: root.vertical
                     ? root.barSize
@@ -105,5 +131,22 @@ BarWidget {
                 onPressed: root.focusWorkspace(modelData)
             }
         }
+    }
+
+    // One place to tweak sizes: ~/.config/omarchy/bar-sizes.json
+    FileView {
+        path: Quickshell.env("HOME") + "/.config/omarchy/bar-sizes.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                var parsed = JSON.parse(text())
+                root.sizeConfig = (parsed && typeof parsed === "object") ? parsed : ({})
+            } catch (e) {
+                root.sizeConfig = ({})
+            }
+        }
+        onLoadFailed: root.sizeConfig = ({})
     }
 }
