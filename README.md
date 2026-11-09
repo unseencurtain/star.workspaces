@@ -73,9 +73,8 @@ Or install by hand:
 
 The widget sits in the left section of the bar, one instance per monitor.
 Click a workspace number to focus it. Occupied workspaces are shown at full
-opacity; empty ones are dimmed. The focused workspace is highlighted in the
-active colour. Set `workspaces.glyph` in `bar-sizes.json` if you prefer an icon
-instead of the number for the focused workspace.
+opacity; empty ones are dimmed. Set `workspaces.glyph` in `bar-sizes.json` if
+you prefer an icon instead of the number for the focused workspace.
 Workspaces carried onto a monitor from an unplugged display are kept after the
 monitor's own workspaces.
 

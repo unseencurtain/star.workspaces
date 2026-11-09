@@ -204,7 +204,6 @@ BarWidget {
                     Hyprland.focusedWorkspace.id === modelData.id
 
                 bar: root.bar
-                active: focused
 
                 text: focused && root.glyph !== ""
                     ? root.glyph
