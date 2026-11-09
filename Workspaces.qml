@@ -34,6 +34,13 @@ BarWidget {
             ? String(wsSizes.glyph)
             : "\uDB85\uDCFB"
 
+    // Workspace IDs that Hyprland assigns to this monitor through workspace
+    // rules. The widget reads `hyprctl workspacerules -j`, so the Lua config is
+    // the only source of truth: changing a monitor's count or range there
+    // updates the bar without a second config file.
+    property var slotIds: []
+    property bool slotsStale: false
+
     function workspaceById(id) {
         var values = Hyprland.workspaces.values
 
@@ -45,24 +52,108 @@ BarWidget {
         return null
     }
 
+    function refreshSlots() {
+        if (!root.monitorName)
+            return
+
+        if (rulesProc.running) {
+            root.slotsStale = true
+            return
+        }
+
+        root.slotsStale = false
+        rulesProc.running = true
+    }
+
+    function readSlots(text) {
+        var ids = []
+
+        try {
+            var rules = JSON.parse(text)
+
+            for (var i = 0; i < rules.length; i++) {
+                var rule = rules[i]
+
+                if (!rule || rule.enabled === false)
+                    continue
+
+                if (String(rule.monitor || "") !== root.monitorName)
+                    continue
+
+                var id = parseInt(String(rule.workspaceString || ""), 10)
+                if (!isFinite(id) || id <= 0)
+                    continue
+
+                ids.push(id)
+            }
+        } catch (e) {
+            ids = []
+        }
+
+        ids.sort(function(a, b) {
+            return a - b
+        })
+
+        var unique = []
+        for (var j = 0; j < ids.length; j++) {
+            if (j === 0 || ids[j] !== ids[j - 1])
+                unique.push(ids[j])
+        }
+
+        root.slotIds = unique
+    }
+
+    // Each monitor's own slots, labelled 1..N. A workspace physically on this
+    // monitor but not in its rule set (for example one carried over from an
+    // unplugged monitor) is kept after them and labelled with its real ID.
     property var workspaceList: {
         var result = []
         var values = Hyprland.workspaces.values
-        var monitor = root.monitorName
+        var ids = root.slotIds
 
-        for (var i = 0; i < values.length; i++) {
-            var ws = values[i]
+        if (ids.length === 0) {
+            // Rules have not loaded yet, or this monitor has none: fall back
+            // to whatever Hyprland currently has on it.
+            var fallback = []
 
-            if (ws.id > 0 &&
-                ws.monitor &&
-                String(ws.monitor.name) === monitor) {
-                result.push(ws.id)
+            for (var i = 0; i < values.length; i++) {
+                var ws = values[i]
+
+                if (ws.id > 0 &&
+                    ws.monitor &&
+                    String(ws.monitor.name) === root.monitorName)
+                    fallback.push(ws.id)
             }
+
+            fallback.sort(function(a, b) {
+                return a - b
+            })
+            ids = fallback
         }
 
-        result.sort(function(a, b) {
+        var own = {}
+        for (var j = 0; j < ids.length; j++) {
+            own[ids[j]] = true
+            result.push({ id: ids[j], label: j + 1, guest: false })
+        }
+
+        var guests = []
+        for (var k = 0; k < values.length; k++) {
+            var value = values[k]
+
+            if (value.id > 0 &&
+                value.monitor &&
+                String(value.monitor.name) === root.monitorName &&
+                !own[value.id])
+                guests.push(value.id)
+        }
+
+        guests.sort(function(a, b) {
             return a - b
         })
+
+        for (var g = 0; g < guests.length; g++)
+            result.push({ id: guests[g], label: guests[g], guest: true })
 
         return result
     }
@@ -97,10 +188,10 @@ BarWidget {
             model: root.workspaceList
 
             delegate: WidgetButton {
-                required property int modelData
+                required property var modelData
 
                 readonly property var workspace:
-                    root.workspaceById(modelData)
+                    root.workspaceById(modelData.id)
 
                 readonly property bool occupied:
                     workspace !== null &&
@@ -108,15 +199,22 @@ BarWidget {
 
                 readonly property bool focused:
                     Hyprland.focusedWorkspace !== null &&
-                    Hyprland.focusedWorkspace.id === modelData
+                    Hyprland.focusedWorkspace.id === modelData.id
 
                 bar: root.bar
 
                 text: focused && root.glyph !== ""
                     ? root.glyph
-                    : String(modelData)
+                    : String(modelData.label)
 
-                opacity: occupied || focused ? 1 : 0.5
+                tooltipText: modelData.guest
+                    ? "Workspace " + modelData.id
+                    : "Workspace " + modelData.id +
+                      " (slot " + modelData.label + ")"
+
+                opacity: occupied || focused
+                    ? 1
+                    : (modelData.guest ? 0.35 : 0.5)
 
                 horizontalMargin: 6
                 verticalPadding: 6
@@ -128,8 +226,41 @@ BarWidget {
 
                 fixedHeight: root.barSize
 
-                onPressed: root.focusWorkspace(modelData)
+                onPressed: root.focusWorkspace(modelData.id)
             }
+        }
+    }
+
+    Component.onCompleted: root.refreshSlots()
+    onMonitorNameChanged: root.refreshSlots()
+
+    // A config reload can change the workspace rules, and a monitor change can
+    // move workspaces between bars. Re-read the rules for both.
+    Connections {
+        target: Hyprland
+
+        function onRawEvent(event) {
+            var name = event ? String(event.name) : ""
+
+            if (name === "configreloaded" ||
+                name === "monitoradded" ||
+                name === "monitorremoved")
+                root.refreshSlots()
+        }
+    }
+
+    Process {
+        id: rulesProc
+
+        command: ["hyprctl", "workspacerules", "-j"]
+
+        stdout: StdioCollector {
+            onStreamFinished: root.readSlots(text)
+        }
+
+        onRunningChanged: {
+            if (!running && root.slotsStale)
+                root.refreshSlots()
         }
     }
 
