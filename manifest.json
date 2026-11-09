@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "star.workspaces",
   "name": "Monitor Workspaces",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "author": "Star",
-  "description": "Shows each monitor's Hyprland workspace slots from workspace rules",
+  "description": "Shows each monitor's Hyprland workspaces from workspace rules",
   "kinds": [
     "bar-widget"
   ],

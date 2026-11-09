@@ -1,8 +1,8 @@
 # Monitor Workspaces
 
 An [Omarchy](https://omarchy.org/) bar widget that shows each monitor's own
-workspace slots. Perfect for multi-monitor setups: every bar shows its monitor's
-slots instead of every workspace on every bar.
+workspaces. Perfect for multi-monitor setups: every bar shows its monitor's
+workspaces instead of every workspace on every bar.
 
 It replaces the stock `omarchy.workspaces` widget with a per-monitor version.
 No patching of Omarchy system files is required — the widget reads its own
@@ -36,11 +36,10 @@ end
 
 Hyprland workspace IDs are global, so two monitors cannot both own workspace
 `1`. With the table above the laptop owns `1–6` and the external owns `7–18`;
-the widget labels them `1–6` and `1–12` on their respective bars. Add another
+the laptop bar shows `1–6` and the external bar shows `7–18`. Add another
 `{ monitor = "...", count = N }` row for a third or fourth monitor.
 
-The tooltip on each button shows the real global Hyprland workspace ID. A full
-Omarchy configuration, including monitor-local keybinds, is in
+A full Omarchy configuration for this layout is in
 [omarchy-plugins/configs/workspaces](https://github.com/unseencurtain/omarchy-plugins/tree/main/configs/workspaces).
 
 ### Omarchy 4.5
@@ -76,7 +75,7 @@ The widget sits in the left section of the bar, one instance per monitor.
 Click a workspace number to focus it. Occupied workspaces are shown at full
 opacity; empty ones are dimmed. The focused workspace shows the active icon.
 Workspaces carried onto a monitor from an unplugged display are kept after the
-monitor's own slots and labelled with their real ID.
+monitor's own workspaces.
 
 ## Layout
 

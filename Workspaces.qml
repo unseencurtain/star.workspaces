@@ -103,9 +103,9 @@ BarWidget {
         root.slotIds = unique
     }
 
-    // Each monitor's own slots, labelled 1..N. A workspace physically on this
-    // monitor but not in its rule set (for example one carried over from an
-    // unplugged monitor) is kept after them and labelled with its real ID.
+    // Each monitor's own workspaces, using their real global IDs. A workspace
+    // physically on this monitor but not in its rule set (for example one
+    // carried over from an unplugged monitor) is kept after them.
     property var workspaceList: {
         var result = []
         var values = Hyprland.workspaces.values
@@ -134,7 +134,7 @@ BarWidget {
         var own = {}
         for (var j = 0; j < ids.length; j++) {
             own[ids[j]] = true
-            result.push({ id: ids[j], label: j + 1, guest: false })
+            result.push({ id: ids[j], guest: false })
         }
 
         var guests = []
@@ -153,7 +153,7 @@ BarWidget {
         })
 
         for (var g = 0; g < guests.length; g++)
-            result.push({ id: guests[g], label: guests[g], guest: true })
+            result.push({ id: guests[g], guest: true })
 
         return result
     }
@@ -205,12 +205,9 @@ BarWidget {
 
                 text: focused && root.glyph !== ""
                     ? root.glyph
-                    : String(modelData.label)
+                    : String(modelData.id)
 
-                tooltipText: modelData.guest
-                    ? "Workspace " + modelData.id
-                    : "Workspace " + modelData.id +
-                      " (slot " + modelData.label + ")"
+                tooltipText: "Workspace " + modelData.id
 
                 opacity: occupied || focused
                     ? 1
