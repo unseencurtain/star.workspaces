@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "star.workspaces",
   "name": "Monitor Workspaces",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "author": "Star",
   "description": "Shows each monitor's Hyprland workspaces from workspace rules",
   "kinds": [
