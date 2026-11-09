@@ -29,12 +29,12 @@ BarWidget {
         return root.numberSize
     }
 
-    // Optional icon for the focused workspace. Leave unset to keep the number
-    // visible and let the active colour mark focus.
+    // Icon shown in place of the number for the focused workspace. Override it
+    // with workspaces.glyph in bar-sizes.json.
     readonly property string glyph:
         (wsSizes.glyph !== undefined && wsSizes.glyph !== null)
             ? String(wsSizes.glyph)
-            : ""
+            : "\uDB85\uDCFB"
 
     // Workspace IDs that Hyprland assigns to this monitor through workspace
     // rules. The widget reads `hyprctl workspacerules -j`, so the Lua config is
